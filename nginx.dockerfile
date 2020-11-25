@@ -4,27 +4,32 @@ FROM node:latest as node
 
 LABEL author="Chaitanya Nalla"
 
-WORKDIR /app
+WORKDIR '/builddir'
 
 COPY package.json  package.json 
 
 RUN npm install
 
-COPY . .
+COPY . ./
 
 RUN npm run build -- --prod
+
+
 
 ##########################################
 
 #####Stage 2
 
-FROM nginx:alpine
+FROM nginx:1.18-alpine
 
 VOLUME /var/nginx/cache
 
-COPY  --from=node /app/dist /usr/share/nginx/html
-
+RUN rm /etc/nginx/conf.d/default.conf
 COPY ./config/nginx.conf /etc/nginx/conf.d/default.conf
+COPY  --from=node /builddir/dist/testapp /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
 
 
 ##docker build -t nginx-angular -f nginx.dockerfile .
